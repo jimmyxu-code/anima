@@ -1,0 +1,33 @@
+# ---- 运行时数据与隐私（一律不入库）----
+memory/
+sessions/
+events/
+reminders/
+workspace/
+压测/
+*.log
+__pycache__/
+.tmp/
+.chrome-space/
+.workbench/
+.zcode/
+.vscode/
+node_modules/
+
+# ---- 本地配置与凭据（只发 example 模板）----
+config.json
+persona.yaml
+mcp.json
+.confirm_token
+.companion_rt.lock
+.task_authority.json
+costs.jsonl
+task_sessions.json
+
+# ---- 模型与本地依赖（按 README 下载/安装）----
+models/
+vendor/
+
+# ---- 打包产物 ----
+*.zip
+dist/

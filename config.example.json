@@ -1,0 +1,15 @@
+{
+ "permission_mode": "confirm",
+ "wake_mode": "both",
+ "rt_duplex": true,
+ "rt_websearch": true,
+ "rt_websearch_type": "web",
+ "exec_backend": "native",
+ "privacy_mode": false,
+ "memory_semantic": true,
+ "bot_name": "小凯",
+ "location_city": "杭州",
+ "location_province": "浙江",
+ "location_lon": 120.16,
+ "location_lat": 30.29
+}

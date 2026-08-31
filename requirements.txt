@@ -1,0 +1,19 @@
+# 核心运行时（Windows 10/11，Python 3.13+）
+numpy
+Pillow
+sounddevice      # 麦克风采集
+miniaudio        # 音频播放
+pystray          # 系统托盘
+PyYAML           # persona.yaml
+keyring          # 凭据管理（Windows 凭据管理器 / DPAPI）
+comtypes         # Windows COM 接口
+aiohttp
+certifi
+sherpa-onnx      # 本地唤醒词检测（KWS，音频不出本机）
+
+# 可选：本地语义记忆检索（emb_local.py；缺了自动回退关键词检索，不影响使用）
+onnxruntime
+tokenizers
+
+# 可选：本地视觉模型推理辅助（默认走云端视觉，无需本地 GPU 也能跑）
+av

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>小凯设置</title>
+<style>
+  :root {
+    --bg: #05070a; --fg: #e6edf3; --dim: #8b98a5;
+    --cyan: #40e0d0; --blue: #78c8ff; --line: #1b2836;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg);
+    font-family: "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    min-height: 100%; }
+  #wrap { max-width: 720px; margin: 0 auto; padding: 36px 28px 60px; }
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: .1em; }
+  h1 small { color: var(--dim); font-size: 13px; letter-spacing: .05em;
+    margin-left: 10px; font-weight: 400; }
+  section { margin-top: 30px; border: 1px solid var(--line);
+    border-radius: 14px; padding: 20px 22px; background: #080d13; }
+  h2 { font-size: 15px; color: var(--cyan); margin-bottom: 14px;
+    letter-spacing: .12em; font-weight: 600; }
+  .opt { display: block; padding: 10px 12px; border-radius: 10px;
+    cursor: pointer; line-height: 1.5; }
+  .opt:hover { background: #0d1620; }
+  .opt input { margin-right: 10px; accent-color: var(--cyan); }
+  .opt .t { font-size: 15px; }
+  .opt .d { display: block; color: var(--dim); font-size: 12.5px;
+    margin-left: 26px; margin-top: 2px; }
+  .note { color: #5a6a7a; font-size: 12.5px; margin-top: 12px;
+    line-height: 1.7; }
+  /* 额度区 */
+  #quota { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  #quota td, #quota th { padding: 8px 6px; text-align: left;
+    border-bottom: 1px solid #101a26; vertical-align: top; }
+  #quota th { color: var(--dim); font-weight: 400; font-size: 12px; }
+  #quota .st-ok { color: var(--cyan); }
+  #quota .st-invalid, #quota .st-error { color: #e0a34a; }
+  #quota .st-missing { color: #5a6a7a; }
+  #quota .st-manual { color: var(--blue); }
+  #quota a { color: var(--blue); text-decoration: none; font-size: 12px; }
+  #quota a:hover { text-decoration: underline; }
+  #quota .use { color: var(--dim); font-size: 12px; }
+  /* 开关行 */
+  .row { display: flex; align-items: center; padding: 9px 12px; }
+  .row:hover { background: #0d1620; border-radius: 10px; }
+  .row label { flex: 1; cursor: pointer; font-size: 15px; }
+  .row .sub { color: var(--dim); font-size: 12.5px; margin-left: 8px; }
+  .row select { background: #0d1620; color: var(--fg); border: 1px solid var(--line);
+    border-radius: 8px; padding: 5px 10px; font-size: 14px; }
+  .row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--cyan); }
+  /* 底部 */
+  #bar { margin-top: 28px; display: flex; align-items: center; gap: 16px; }
+  button { background: var(--cyan); color: #04272a; border: none;
+    border-radius: 10px; padding: 10px 28px; font-size: 15px; cursor: pointer;
+    font-family: inherit; }
+  button.ghost { background: transparent; color: var(--blue);
+    border: 1px solid var(--line); padding: 6px 14px; font-size: 13px; }
+  button:disabled { opacity: .5; cursor: default; }
+  #msg { color: var(--dim); font-size: 13.5px; }
+  #msg.ok { color: var(--cyan); }
+  #msg.err { color: #e0a34a; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>小凯设置<small>本地面板 · 即时保存到 config.json</small></h1>
+
+  <section>
+    <h2>权限模式（即时生效）</h2>
+    <label class="opt">
+      <input type="radio" name="pm" value="confirm">
+      <span class="t">逐条确认</span>
+      <span class="d">每个危险操作都先用语音问你一次，你答应才动手（默认）。</span>
+    </label>
+    <label class="opt">
+      <input type="radio" name="pm" value="auto">
+      <span class="t">自动通过</span>
+      <span class="d">同一类操作在同一个任务里问过一次就不再重问；新任务重新问。</span>
+    </label>
+    <label class="opt">
+      <input type="radio" name="pm" value="yolo">
+      <span class="t">完全自主</span>
+      <span class="d">除“永久毁掉数据且正常手段无法恢复”的删除任务外，其他操作全部直接通过；由模型理解意图，规则只兜底。</span>
+    </label>
+    <div class="note">逐条确认/自动通过两档：删除、发送、付款、系统变更这类最高危操作都会先语音确认；
+      完全自主档只剩不可恢复的数据删除才确认。所有确认都通过语音完成，不需要碰键盘。</div>
+  </section>
+
+  <section>
+    <h2>各厂商 API 额度
+      <button class="ghost" id="refresh" style="float:right">刷新额度</button>
+    </h2>
+    <table id="quota">
+      <tr><th>厂商</th><th>用途</th><th>状态 / 余额</th></tr>
+      <tr><td colspan="3" style="color:var(--dim)">查询中…</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>常用开关（重启小凯后生效）</h2>
+    <div class="row">
+      <label for="wake">唤起方式</label>
+      <select id="wake">
+        <option value="press">只按长按</option>
+        <option value="word">只唤醒词</option>
+        <option value="both">长按 + 唤醒词</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="privacy">隐私模式<span class="sub">开着时不记长期记忆</span></label>
+      <input type="checkbox" id="privacy">
+    </div>
+    <div class="row">
+      <label for="ws">联网搜索<span class="sub">查天气新闻等实时信息</span></label>
+      <input type="checkbox" id="ws">
+    </div>
+    <div class="row">
+      <label for="duplex">全双工语音<span class="sub">随时插话的新语音链路</span></label>
+      <input type="checkbox" id="duplex">
+    </div>
+  </section>
+
+  <section>
+    <h2>能力包（换机/部署迁移）</h2>
+    <div class="note" style="margin-top:0">小凯学会的本事：能力件 + GUI 配方。
+      导出为一个 JSON 文件，在另一台机器的小凯里导入即迁移（合并不覆盖，
+      同名片段新者胜）。</div>
+    <div style="display:flex;gap:12px;margin-top:14px">
+      <button class="ghost" id="exp">导出能力包</button>
+      <button class="ghost" id="imp">导入能力包…</button>
+      <input type="file" id="impfile" accept=".json" style="display:none">
+    </div>
+  </section>
+
+  <div id="bar">
+    <button id="save">保存</button>
+    <span id="msg"></span>
+  </div>
+</div>
+
+<script>
+const TOKEN = "__CONFIRM_TOKEN__";
+const $ = (id) => document.getElementById(id);
+
+function say(text, cls) {
+  const m = $("msg");
+  m.textContent = text;
+  m.className = cls || "";
+}
+
+async function loadConfig() {
+  try {
+    const r = await fetch("/settings/api");
+    const d = await r.json();
+    const c = d.config || {};
+    const pm = c.permission_mode || "confirm";
+    document.querySelectorAll("input[name=pm]").forEach(el => {
+      el.checked = (el.value === pm);
+    });
+    $("wake").value = c.wake_mode || "press";
+    $("privacy").checked = !!c.privacy_mode;
+    $("ws").checked = !!c.rt_websearch;
+    $("duplex").checked = !!c.rt_duplex;
+  } catch (e) {
+    say("读取配置失败：" + e, "err");
+  }
+}
+
+const STXT = { ok: "", invalid: "凭据无效或已过期", error: "查询失败",
+               missing: "未配置凭据", manual: "已配置 · 余额请到控制台查" };
+
+async function loadQuota(force) {
+  const tb = $("quota");
+  try {
+    const r = await fetch("/settings/quota" + (force ? "?refresh=1" : ""));
+    const d = await r.json();
+    const rows = ['<tr><th>厂商</th><th>用途</th><th>状态 / 余额</th></tr>'];
+    for (const q of (d.quota || [])) {
+      let st;
+      if (q.status === "ok") st = '<span class="st-ok">' + q.balance + "</span>";
+      else st = '<span class="st-' + q.status + '">' +
+                (q.balance || STXT[q.status] || q.status) + "</span>";
+      st += '<br><a href="' + q.console_url + '" target="_blank">控制台</a>';
+      rows.push("<tr><td>" + q.label + "</td><td class=\"use\">" + q.use +
+                "</td><td>" + st + "</td></tr>");
+    }
+    tb.innerHTML = rows.join("");
+  } catch (e) {
+    tb.innerHTML = "<tr><td colspan=3 style=color:#e0a34a>额度查询失败：" +
+                   e + "</td></tr>";
+  }
+}
+
+$("refresh").onclick = () => loadQuota(true);
+
+$("exp").onclick = async () => {
+  say("导出中…");
+  try {
+    const r = await fetch("/settings/capack");
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.reason || r.status);
+    const blob = new Blob([JSON.stringify(d.pack, null, 1)],
+                          { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "小凯能力包-" +
+      new Date().toISOString().slice(0, 10).replaceAll("-", "") + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    say("已导出 ✓ 能力件 " + d.pack.capabilities.length +
+        " 件 / 配方 " + d.pack.recipes.length + " 条", "ok");
+  } catch (e) {
+    say("导出失败：" + e, "err");
+  }
+};
+
+$("imp").onclick = () => $("impfile").click();
+$("impfile").onchange = async (ev) => {
+  const f = ev.target.files[0];
+  ev.target.value = "";
+  if (!f) return;
+  say("导入中…");
+  try {
+    const pack = JSON.parse(await f.text());
+    const r = await fetch("/settings/capack", {
+      method: "POST",
+      headers: { "Content-Type": "application/json",
+                 "X-Confirm-Token": TOKEN },
+      body: JSON.stringify({ pack }),
+    });
+    const d = await r.json();
+    if (d.ok) say("已导入 ✓ 能力件新增 " + d.imported.capabilities_new +
+                  "（共 " + d.imported.capabilities_total + "）/ 配方新增 " +
+                  d.imported.recipes_new + "（共 " + d.imported.recipes_total +
+                  "）", "ok");
+    else say("导入失败：" + (d.reason || r.status), "err");
+  } catch (e) {
+    say("导入失败：" + e, "err");
+  }
+};
+
+$("save").onclick = async () => {
+  const pm = document.querySelector("input[name=pm]:checked");
+  const body = {
+    permission_mode: pm ? pm.value : "confirm",
+    wake_mode: $("wake").value,
+    privacy_mode: $("privacy").checked,
+    rt_websearch: $("ws").checked,
+    rt_duplex: $("duplex").checked,
+  };
+  $("save").disabled = true;
+  say("保存中…");
+  try {
+    const r = await fetch("/settings/api", {
+      method: "POST",
+      headers: { "Content-Type": "application/json",
+                 "X-Confirm-Token": TOKEN },
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (d.ok) say("已保存 ✓ 权限模式即时生效，开关重启后生效", "ok");
+    else say("保存失败：" + (d.reason || r.status), "err");
+  } catch (e) {
+    say("保存失败：" + e, "err");
+  }
+  $("save").disabled = false;
+};
+
+loadConfig();
+loadQuota(false);
+</script>
+</body>
+</html>

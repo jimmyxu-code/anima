@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.84.2",
+    "@modelcontextprotocol/server-everything": "^2026.7.4",
+    "@modelcontextprotocol/server-filesystem": "^2026.7.10"
+  }
+}
