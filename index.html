@@ -1,9 +1,6 @@
 <!DOCTYPE html><html lang="zh"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>小凯远程</title>
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#17171c">
-<link rel="icon" href="icon-192.png">
+<title>小凯远程入口</title>
 <style>body{background:#17171c;color:#e8e8ec;font:16px/1.6 system-ui,
 sans-serif;display:flex;align-items:center;justify-content:center;
 height:100vh;margin:0}div{text-align:center;max-width:86vw}
@@ -22,7 +19,6 @@ a{color:#40e0d0}</style></head>
    /remote 的 localStorage 跟不过去（09-07 4G 实测踩过）；
    入口页带着令牌重定向，/remote 读 ?token= 即入。令牌只活
    在本浏览器，永不进公开仓库。 */
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}
 let TOK=localStorage.xk_entry_tok||'';
 const _q=new URLSearchParams(location.search);
 if(_q.get('token')){TOK=_q.get('token');localStorage.xk_entry_tok=TOK}
@@ -30,20 +26,13 @@ function m(s){const d=document.getElementById('m');
 d.style.display='block';d.innerHTML=s+'<br><a href="./">重试</a>'}
 function go(){const v=document.getElementById('tk').value.trim();
 if(!v)return;localStorage.xk_entry_tok=v;TOK=v;jump()}
-function jump(){fetch('current.txt')
- .then(r=>{if(!r.ok)throw 0;return r.text()})
+function jump(){fetch('current.txt',{cache:'no-store'})
+ .then(r=>r.text())
  .then(u=>{u=u.trim();
    if(!u||!u.startsWith('https://')){m('入口数据为空，稍后再试');return}
-   localStorage.xk_last_url=u;
    location.replace(u+(u.includes('?')?'&':'?')+
      'token='+encodeURIComponent(TOK))})
- .catch(()=>{
-   /* 网络失败/超时：退回上次已知地址（SW 已把 current.txt 备进
-      缓存，这里其实少见；真没有才提示）。 */
-   const last=localStorage.xk_last_url;
-   if(last){location.replace(last+(last.includes('?')?'&':'?')+
-     'token='+encodeURIComponent(TOK))}
-   else{m('取入口失败（网络）')}})}
+ .catch(()=>m('取入口失败（网络）'))}
 if(TOK){jump()}else{
  document.getElementById('m').style.display='none';
  document.getElementById('g').style.display='block'}
