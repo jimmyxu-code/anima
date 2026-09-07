@@ -3,15 +3,37 @@
 <title>小凯远程入口</title>
 <style>body{background:#17171c;color:#e8e8ec;font:16px/1.6 system-ui,
 sans-serif;display:flex;align-items:center;justify-content:center;
-height:100vh;margin:0}div{text-align:center}a{color:#40e0d0}</style></head>
+height:100vh;margin:0}div{text-align:center;max-width:86vw}
+input{width:100%;box-sizing:border-box;background:#2c2c35;color:#e8e8ec;
+border:0;border-radius:10px;padding:12px;font-size:15px;outline:none;
+margin:10px 0}button{background:#40e0a0;color:#04211d;border:0;
+border-radius:10px;padding:12px 26px;font-weight:600;font-size:15px}
+a{color:#40e0d0}</style></head>
 <body><div id="m">正在接通小凯远程…</div>
+<div id="g" style="display:none"><b>第一次使用</b><br>
+输入连接令牌（只输这一次，此后全自动）：
+<input id="tk" placeholder="连接令牌" autocomplete="off">
+<button onclick="go()">进入</button></div>
 <script>
-fetch('current.txt',{cache:'no-store'})
+/* 令牌记在入口页自己的域（github.io）里——隧道换子域=换源，
+   /remote 的 localStorage 跟不过去（09-07 4G 实测踩过）；
+   入口页带着令牌重定向，/remote 读 ?token= 即入。令牌只活
+   在本浏览器，永不进公开仓库。 */
+let TOK=localStorage.xk_entry_tok||'';
+const _q=new URLSearchParams(location.search);
+if(_q.get('token')){TOK=_q.get('token');localStorage.xk_entry_tok=TOK}
+function m(s){const d=document.getElementById('m');
+d.style.display='block';d.innerHTML=s+'<br><a href="./">重试</a>'}
+function go(){const v=document.getElementById('tk').value.trim();
+if(!v)return;localStorage.xk_entry_tok=v;TOK=v;jump()}
+function jump(){fetch('current.txt',{cache:'no-store'})
  .then(r=>r.text())
  .then(u=>{u=u.trim();
-   if(u&&u.startsWith('https://')){location.replace(u)}
-   else{document.getElementById('m').innerHTML=
-     '入口数据为空，稍后再试<br><a href="./">重试</a>'}})
- .catch(()=>{document.getElementById('m').innerHTML=
-   '取入口失败（网络）<br><a href="./">重试</a>'});
+   if(!u||!u.startsWith('https://')){m('入口数据为空，稍后再试');return}
+   location.replace(u+(u.includes('?')?'&':'?')+
+     'token='+encodeURIComponent(TOK))})
+ .catch(()=>m('取入口失败（网络）'))}
+if(TOK){jump()}else{
+ document.getElementById('m').style.display='none';
+ document.getElementById('g').style.display='block'}
 </script></body></html>
