@@ -30,20 +30,39 @@ function m(s){const d=document.getElementById('m');
 d.style.display='block';d.innerHTML=s+'<br><a href="./">重试</a>'}
 function go(){const v=document.getElementById('tk').value.trim();
 if(!v)return;localStorage.xk_entry_tok=v;TOK=v;jump()}
-function jump(){fetch('current.txt')
- .then(r=>{if(!r.ok)throw 0;return r.text()})
- .then(u=>{u=u.trim();
-   if(!u||!u.startsWith('https://')){m('入口数据为空，稍后再试');return}
-   localStorage.xk_last_url=u;
-   location.replace(u+(u.includes('?')?'&':'?')+
-     'token='+encodeURIComponent(TOK))})
- .catch(()=>{
-   /* 网络失败/超时：退回上次已知地址（SW 已把 current.txt 备进
-      缓存，这里其实少见；真没有才提示）。 */
-   const last=localStorage.xk_last_url;
-   if(last){location.replace(last+(last.includes('?')?'&':'?')+
-     'token='+encodeURIComponent(TOK))}
-   else{m('取入口失败（网络）')}})}
+function alive(u,ms){return new Promise(res=>{
+ const t=setTimeout(()=>res(false),ms);
+ fetch(u,{mode:'no-cors'}).then(()=>{clearTimeout(t);res(true)})
+ .catch(()=>{clearTimeout(t);res(false)})})}
+function to(u){localStorage.xk_last_url=u;
+ location.replace(u+(u.includes('?')?'&':'?')+
+   'token='+encodeURIComponent(TOK))}
+function jump(){
+ /* v4 活性探测（09-07 "打不开"根因修）：先探上次地址活不活
+    （2.5s，隧道在 4G 上快），活着直接走；死了/没有才等新地址
+    （8s 上限）。绝不再盲跳缓存里的死地址。 */
+ const last=localStorage.xk_last_url||'';
+ const fresh=fetch('current.txt')
+  .then(r=>{if(!r.ok)throw 0;return r.text()})
+  .then(s=>s.trim())
+  .catch(()=>null);
+ if(last&&last.startsWith('https://')){
+  alive(last,2500).then(ok=>{
+   if(ok){to(last);return}
+   fresh.then(u=>{
+    if(u&&u.startsWith('https://')&&u!==last){to(u)}
+    else if(u===null&&TOK){m('入口取不到（网络），稍后重试')}
+    else if(u){to(u)}   /* 同址但刚探测失败：再试一次 */
+    else{m('地址暂不可用，稍后重试')}});
+  });
+  /* 后台校准缓存，不影响本次跳转 */
+  fresh.then(u=>{if(u&&u.startsWith('https://'))
+    localStorage.xk_last_url=u});
+ }else{
+  fresh.then(u=>{
+   if(u&&u.startsWith('https://')){to(u)}
+   else{m('入口数据为空，稍后再试')}});
+ }}
 if(TOK){jump()}else{
  document.getElementById('m').style.display='none';
  document.getElementById('g').style.display='block'}
